@@ -31,6 +31,7 @@ struct GB_Cpu {
 };
 typedef struct GB_Cpu GB_Cpu;
 
-void GB_Cpu_init(GB_Cpu *cpu);
+void GB_Cpu_init(GB_Cpu *cpu, GB_Bus *bus);
+uint8_t GB_Cpu_tick(GB_Cpu *cpu);
 
 #endif

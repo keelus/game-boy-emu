@@ -26,4 +26,6 @@ int8_t GB_Bus_mem_read(GB_Bus *bus, uint16_t address, GB_Bus_mem_caller caller);
 void GB_Bus_mem_write(GB_Bus *bus, uint16_t address, uint8_t value,
 					  GB_Bus_mem_caller caller);
 
+void GB_Bus_tick(GB_Bus *bus);
+
 #endif
