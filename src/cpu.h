@@ -2,6 +2,7 @@
 #define GB_CPU_H
 
 #include "bus.h"
+#include <stdbool.h>
 #include <stdint.h>
 
 #define FLAG_ZERO 0x80
@@ -13,17 +14,61 @@ struct GB_Cpu {
 	GB_Bus *bus;
 
 	struct {
-		uint8_t A;
-		uint8_t F;
+		union {
+			uint16_t AF;
 
-		uint8_t B;
-		uint8_t C;
+			struct {
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+				uint8_t F;
+				uint8_t A;
+#else
+				uint8_t A;
+				uint8_t F;
+#endif
+			};
+		};
 
-		uint8_t D;
-		uint8_t E;
+		union {
+			uint16_t BC;
 
-		uint8_t H;
-		uint8_t L;
+			struct {
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+				uint8_t C;
+				uint8_t B;
+#else
+				uint8_t B;
+				uint8_t C;
+#endif
+			};
+		};
+
+		union {
+			uint16_t DE;
+
+			struct {
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+				uint8_t E;
+				uint8_t D;
+#else
+				uint8_t D;
+				uint8_t E;
+#endif
+			};
+		};
+
+		union {
+			uint16_t HL;
+
+			struct {
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+				uint8_t L;
+				uint8_t H;
+#else
+				uint8_t H;
+				uint8_t L;
+#endif
+			};
+		};
 
 		uint16_t SP;
 		uint16_t PC;
@@ -33,5 +78,6 @@ typedef struct GB_Cpu GB_Cpu;
 
 void GB_Cpu_init(GB_Cpu *cpu, GB_Bus *bus);
 uint8_t GB_Cpu_tick(GB_Cpu *cpu);
+uint8_t GB_Cpu_set_flag(GB_Cpu *cpu, uint8_t mask, bool value);
 
 #endif

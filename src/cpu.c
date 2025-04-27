@@ -1,5 +1,6 @@
 #include "cpu.h"
 #include "bus.h"
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -56,6 +57,64 @@ uint8_t GB_Cpu_tick(GB_Cpu *cpu) {
 	uint8_t cycles = CYCLE_TABLE[opcode];
 
 	switch(opcode) {
+	case 0x00: /* NOP */ break;
+	case 0x01: /* LD BC, n16 */ {
+		uint8_t lsb =
+			GB_Bus_mem_read(cpu->bus, cpu->registers.PC++, CALLER_CPU);
+		uint8_t msb =
+			GB_Bus_mem_read(cpu->bus, cpu->registers.PC++, CALLER_CPU);
+
+		cpu->registers.B = msb;
+		cpu->registers.C = msb;
+	} break;
+	case 0x02: /* LD [BC], A */ {
+		GB_Bus_mem_write(cpu->bus, cpu->registers.BC, cpu->registers.A,
+						 CALLER_CPU);
+	} break;
+	case 0x03: /* INC BC */ {
+		cpu->registers.BC++;
+	} break;
+	case 0x04: /* INC B */ {
+		uint8_t b = cpu->registers.B;
+		uint8_t result = b + 1;
+
+		GB_Cpu_set_flag(cpu, FLAG_ZERO, result == 0);
+		GB_Cpu_set_flag(cpu, FLAG_SUB, 0);
+		GB_Cpu_set_flag(cpu, FLAG_HALF_CARRY, result < b);
+	} break;
+	case 0x05: /* DEC B */ {
+		uint8_t b = cpu->registers.B;
+		uint8_t result = b - 1;
+
+		GB_Cpu_set_flag(cpu, FLAG_ZERO, result == 0);
+		GB_Cpu_set_flag(cpu, FLAG_SUB, 1);
+		GB_Cpu_set_flag(cpu, FLAG_HALF_CARRY, result > b);
+	} break;
+	case 0x06: /* LD B, n8 */ {
+		cpu->registers.B =
+			GB_Bus_mem_read(cpu->bus, cpu->registers.PC++, CALLER_CPU);
+	} break;
+	case 0x07: /* RCLA */ {
+		uint8_t a = cpu->registers.A;
+		uint8_t result = (a << 1) | (a >> 7);
+
+		GB_Cpu_set_flag(cpu, FLAG_ZERO, 0);
+		GB_Cpu_set_flag(cpu, FLAG_SUB, 0);
+		GB_Cpu_set_flag(cpu, FLAG_HALF_CARRY, 0);
+		GB_Cpu_set_flag(cpu, FLAG_CARRY, a & 0x01);
+	} break;
+	case 0x08: /* LD [a16], SP */ {
+		uint8_t lsb =
+			GB_Bus_mem_read(cpu->bus, cpu->registers.PC++, CALLER_CPU);
+		uint8_t msb =
+			GB_Bus_mem_read(cpu->bus, cpu->registers.PC++, CALLER_CPU);
+
+		uint16_t addr = (msb << 8) | lsb;
+		uint16_t sp = cpu->registers.SP;
+
+		GB_Bus_mem_write(cpu->bus, addr, sp & 0xFF, CALLER_CPU);
+		GB_Bus_mem_write(cpu->bus, addr + 1, sp >> 8, CALLER_CPU);
+	} break;
 	default:
 		fprintf(stderr, "[WARN] Missing instruction for the Opcode %x.\n",
 				opcode);
@@ -63,4 +122,11 @@ uint8_t GB_Cpu_tick(GB_Cpu *cpu) {
 	}
 
 	return cycles;
+}
+
+uint8_t GB_Cpu_set_flag(GB_Cpu *cpu, uint8_t mask, bool on) {
+	if(on)
+		cpu->registers.F |= mask;
+	else
+		cpu->registers.F &= ~mask;
 }
