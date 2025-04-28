@@ -5,6 +5,15 @@
 #include <stdio.h>
 
 void GB_Cpu_init(GB_Cpu *cpu, GB_Bus *bus) {
+	cpu->bus = bus;
+
+	cpu->registers.AF = 0;
+	cpu->registers.BC = 0;
+	cpu->registers.DE = 0;
+	cpu->registers.HL = 0;
+
+	cpu->registers.PC = 0;
+	cpu->registers.SP = 0;
 }
 
 // clang-format off
@@ -160,6 +169,8 @@ uint8_t GB_Cpu_add_and_set_flags(GB_Cpu *cpu, uint8_t a, uint8_t b,
 	GB_Cpu_set_flag(cpu, FLAG_CARRY, carry);
 
 	if(update_zero_flag) GB_Cpu_set_flag(cpu, FLAG_ZERO, result == 0);
+
+	return result;
 }
 
 uint8_t GB_Cpu_inc_8reg_and_set_flags(GB_Cpu *cpu, uint8_t value) {

@@ -15,7 +15,7 @@ void GB_Bus_init(GB_Bus *bus) {
 	GB_Mem_init(bus->mem, bus);
 
 	bus->ppu = (GB_Ppu *)malloc(sizeof(GB_Ppu));
-	GB_Ppu_init(bus->ppu, bus);
+	// GB_Ppu_init(bus->ppu, bus);
 }
 
 void GB_Bus_free(GB_Bus *bus) {
