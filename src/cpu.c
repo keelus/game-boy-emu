@@ -93,14 +93,14 @@ uint8_t GB_Cpu_tick(GB_Cpu *cpu) {
 		cpu->registers.B =
 			GB_Bus_mem_read(cpu->bus, cpu->registers.PC++, CALLER_CPU);
 	} break;
-	case 0x07: /* RCLA */ {
+	case 0x07: /* RLCA */ {
 		uint8_t a = cpu->registers.A;
 		uint8_t result = (a << 1) | (a >> 7);
 
 		GB_Cpu_set_flag(cpu, FLAG_ZERO, 0);
 		GB_Cpu_set_flag(cpu, FLAG_SUB, 0);
 		GB_Cpu_set_flag(cpu, FLAG_HALF_CARRY, 0);
-		GB_Cpu_set_flag(cpu, FLAG_CARRY, a & 0x01);
+		GB_Cpu_set_flag(cpu, FLAG_CARRY, result & 0x01);
 	} break;
 	case 0x08: /* LD [a16], SP */ {
 		uint8_t lsb =
