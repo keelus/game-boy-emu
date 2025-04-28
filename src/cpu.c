@@ -75,20 +75,10 @@ uint8_t GB_Cpu_tick(GB_Cpu *cpu) {
 		cpu->registers.BC++;
 	} break;
 	case 0x04: /* INC B */ {
-		uint8_t b = cpu->registers.B;
-		uint8_t result = b + 1;
-
-		GB_Cpu_set_flag(cpu, FLAG_ZERO, result == 0);
-		GB_Cpu_set_flag(cpu, FLAG_SUB, 0);
-		GB_Cpu_set_flag(cpu, FLAG_HALF_CARRY, result < b);
+		cpu->registers.B = GB_Cpu_inc_8reg_and_set_flags(cpu, cpu->registers.B);
 	} break;
 	case 0x05: /* DEC B */ {
-		uint8_t b = cpu->registers.B;
-		uint8_t result = b - 1;
-
-		GB_Cpu_set_flag(cpu, FLAG_ZERO, result == 0);
-		GB_Cpu_set_flag(cpu, FLAG_SUB, 1);
-		GB_Cpu_set_flag(cpu, FLAG_HALF_CARRY, result > b);
+		cpu->registers.B = GB_Cpu_dec_8reg_and_set_flags(cpu, cpu->registers.B);
 	} break;
 	case 0x06: /* LD B, n8 */ {
 		cpu->registers.B =
@@ -115,6 +105,34 @@ uint8_t GB_Cpu_tick(GB_Cpu *cpu) {
 		GB_Bus_mem_write(cpu->bus, addr, sp & 0xFF, CALLER_CPU);
 		GB_Bus_mem_write(cpu->bus, addr + 1, sp >> 8, CALLER_CPU);
 	} break;
+	case 0x09: /* ADD HL, BC */ {
+		uint8_t l = GB_Cpu_add_and_set_flags(cpu, cpu->registers.L,
+											 cpu->registers.C, false);
+		uint8_t h = GB_Cpu_add_and_set_flags(cpu, cpu->registers.H,
+											 cpu->registers.B, false);
+
+		cpu->registers.L = l;
+		cpu->registers.H = h;
+
+		GB_Cpu_set_flag(cpu, FLAG_SUB, 0);
+	} break;
+	case 0x0A: /* LD A, [BC] */ {
+		cpu->registers.A =
+			GB_Bus_mem_read(cpu->bus, cpu->registers.BC, CALLER_CPU);
+	} break;
+	case 0x0B: /* DEC, BC */ {
+		cpu->registers.BC--;
+	} break;
+	case 0x0C: /* INC C */ {
+		cpu->registers.C = GB_Cpu_inc_8reg_and_set_flags(cpu, cpu->registers.C);
+	} break;
+	case 0x0D: /* DEC C */ {
+		cpu->registers.C = GB_Cpu_dec_8reg_and_set_flags(cpu, cpu->registers.C);
+	} break;
+	case 0x0E: /* LD C, n8 */ {
+		cpu->registers.C =
+			GB_Bus_mem_read(cpu->bus, cpu->registers.PC++, CALLER_CPU);
+	} break;
 	default:
 		fprintf(stderr, "[WARN] Missing instruction for the Opcode %x.\n",
 				opcode);
@@ -124,9 +142,42 @@ uint8_t GB_Cpu_tick(GB_Cpu *cpu) {
 	return cycles;
 }
 
-uint8_t GB_Cpu_set_flag(GB_Cpu *cpu, uint8_t mask, bool on) {
+void GB_Cpu_set_flag(GB_Cpu *cpu, uint8_t mask, bool on) {
 	if(on)
 		cpu->registers.F |= mask;
 	else
 		cpu->registers.F &= ~mask;
+}
+
+uint8_t GB_Cpu_add_and_set_flags(GB_Cpu *cpu, uint8_t a, uint8_t b,
+								 bool update_zero_flag) {
+	uint8_t result = a + b;
+
+	uint8_t half_carry = ((a & 0xF) + (b & 0xF)) > 0xF;
+	uint8_t carry = result < a;
+
+	GB_Cpu_set_flag(cpu, FLAG_HALF_CARRY, half_carry);
+	GB_Cpu_set_flag(cpu, FLAG_CARRY, carry);
+
+	if(update_zero_flag) GB_Cpu_set_flag(cpu, FLAG_ZERO, result == 0);
+}
+
+uint8_t GB_Cpu_inc_8reg_and_set_flags(GB_Cpu *cpu, uint8_t value) {
+	uint8_t result = value + 1;
+
+	GB_Cpu_set_flag(cpu, FLAG_ZERO, result == 0);
+	GB_Cpu_set_flag(cpu, FLAG_SUB, 0);
+	GB_Cpu_set_flag(cpu, FLAG_HALF_CARRY, result < value);
+
+	return result;
+}
+
+uint8_t GB_Cpu_dec_8reg_and_set_flags(GB_Cpu *cpu, uint8_t value) {
+	uint8_t result = value - 1;
+
+	GB_Cpu_set_flag(cpu, FLAG_ZERO, result == 0);
+	GB_Cpu_set_flag(cpu, FLAG_SUB, 1);
+	GB_Cpu_set_flag(cpu, FLAG_HALF_CARRY, result > value);
+
+	return result;
 }
