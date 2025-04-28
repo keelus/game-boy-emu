@@ -74,7 +74,7 @@ uint8_t GB_Cpu_tick(GB_Cpu *cpu) {
 			GB_Bus_mem_read(cpu->bus, cpu->registers.PC++, CALLER_CPU);
 
 		cpu->registers.B = msb;
-		cpu->registers.C = msb;
+		cpu->registers.C = lsb;
 	} break;
 	case 0x02: /* LD [BC], A */ {
 		GB_Bus_mem_write(cpu->bus, cpu->registers.BC, cpu->registers.A,
@@ -115,15 +115,19 @@ uint8_t GB_Cpu_tick(GB_Cpu *cpu) {
 		GB_Bus_mem_write(cpu->bus, addr + 1, sp >> 8, CALLER_CPU);
 	} break;
 	case 0x09: /* ADD HL, BC */ {
-		uint8_t l = GB_Cpu_add_and_set_flags(cpu, cpu->registers.L,
-											 cpu->registers.C, false);
-		uint8_t h = GB_Cpu_add_and_set_flags(cpu, cpu->registers.H,
-											 cpu->registers.B, false);
+		uint16_t hl = cpu->registers.HL;
+		uint16_t bc = cpu->registers.BC;
 
-		cpu->registers.L = l;
-		cpu->registers.H = h;
+		uint16_t result = hl + bc;
 
+		bool half_carry = (hl & 0x07FF) + (bc & 0x07FF) > 0x07FF;
+		bool carry = result < hl;
+
+		GB_Cpu_set_flag(cpu, FLAG_HALF_CARRY, half_carry);
+		GB_Cpu_set_flag(cpu, FLAG_CARRY, carry);
 		GB_Cpu_set_flag(cpu, FLAG_SUB, 0);
+
+		cpu->registers.HL = result;
 	} break;
 	case 0x0A: /* LD A, [BC] */ {
 		cpu->registers.A =
@@ -155,7 +159,7 @@ uint8_t GB_Cpu_tick(GB_Cpu *cpu) {
 			GB_Bus_mem_read(cpu->bus, cpu->registers.PC++, CALLER_CPU);
 
 		cpu->registers.D = msb;
-		cpu->registers.E = msb;
+		cpu->registers.E = lsb;
 	} break;
 	case 0x12: /* LD [DE], A */ {
 		GB_Bus_mem_write(cpu->bus, cpu->registers.DE, cpu->registers.A,
@@ -181,15 +185,19 @@ uint8_t GB_Cpu_tick(GB_Cpu *cpu) {
 		cpu->registers.PC += e;
 	} break;
 	case 0x19: /* ADD HL, DE */ {
-		uint8_t l = GB_Cpu_add_and_set_flags(cpu, cpu->registers.L,
-											 cpu->registers.E, false);
-		uint8_t h = GB_Cpu_add_and_set_flags(cpu, cpu->registers.H,
-											 cpu->registers.D, false);
+		uint16_t hl = cpu->registers.HL;
+		uint16_t de = cpu->registers.DE;
 
-		cpu->registers.L = l;
-		cpu->registers.H = h;
+		uint16_t result = hl + de;
 
+		bool half_carry = (hl & 0x07FF) + (de & 0x07FF) > 0x07FF;
+		bool carry = result < hl;
+
+		GB_Cpu_set_flag(cpu, FLAG_HALF_CARRY, half_carry);
+		GB_Cpu_set_flag(cpu, FLAG_CARRY, carry);
 		GB_Cpu_set_flag(cpu, FLAG_SUB, 0);
+
+		cpu->registers.HL = result;
 	} break;
 	case 0x1A: /* LD A, [DE] */ {
 		cpu->registers.A =
@@ -246,7 +254,7 @@ uint8_t GB_Cpu_inc_8reg_and_set_flags(GB_Cpu *cpu, uint8_t value) {
 
 	GB_Cpu_set_flag(cpu, FLAG_ZERO, result == 0);
 	GB_Cpu_set_flag(cpu, FLAG_SUB, 0);
-	GB_Cpu_set_flag(cpu, FLAG_HALF_CARRY, result < value);
+	GB_Cpu_set_flag(cpu, FLAG_HALF_CARRY, (value & 0x0F) == 0x0F);
 
 	return result;
 }
@@ -256,7 +264,7 @@ uint8_t GB_Cpu_dec_8reg_and_set_flags(GB_Cpu *cpu, uint8_t value) {
 
 	GB_Cpu_set_flag(cpu, FLAG_ZERO, result == 0);
 	GB_Cpu_set_flag(cpu, FLAG_SUB, 1);
-	GB_Cpu_set_flag(cpu, FLAG_HALF_CARRY, result > value);
+	GB_Cpu_set_flag(cpu, FLAG_HALF_CARRY, (value & 0x0F) == 0x00);
 
 	return result;
 }
