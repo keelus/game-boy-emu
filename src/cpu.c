@@ -129,7 +129,7 @@ uint8_t GB_Cpu_tick(GB_Cpu *cpu) {
 		cpu->registers.A =
 			GB_Bus_mem_read(cpu->bus, cpu->registers.BC, CALLER_CPU);
 	} break;
-	case 0x0B: /* DEC, BC */ {
+	case 0x0B: /* DEC BC */ {
 		cpu->registers.BC--;
 	} break;
 	case 0x0C: /* INC C */ {
@@ -142,6 +142,74 @@ uint8_t GB_Cpu_tick(GB_Cpu *cpu) {
 		cpu->registers.C =
 			GB_Bus_mem_read(cpu->bus, cpu->registers.PC++, CALLER_CPU);
 	} break;
+	// case 0x0F: /* RRCA */ {
+	// } break;
+	case 0x10: /* STOP n8 */ {
+		GB_Bus_mem_read(cpu->bus, cpu->registers.PC++,
+						CALLER_CPU); /* Ignore next byte */
+	} break;
+	case 0x11: /* LD DE, n16 */ {
+		uint8_t lsb =
+			GB_Bus_mem_read(cpu->bus, cpu->registers.PC++, CALLER_CPU);
+		uint8_t msb =
+			GB_Bus_mem_read(cpu->bus, cpu->registers.PC++, CALLER_CPU);
+
+		cpu->registers.D = msb;
+		cpu->registers.E = msb;
+	} break;
+	case 0x12: /* LD [DE], A */ {
+		GB_Bus_mem_write(cpu->bus, cpu->registers.DE, cpu->registers.A,
+						 CALLER_CPU);
+	} break;
+	case 0x13: /* INC DE */ {
+		cpu->registers.DE++;
+	} break;
+	case 0x14: /* INC D */ {
+		cpu->registers.D = GB_Cpu_inc_8reg_and_set_flags(cpu, cpu->registers.D);
+	} break;
+	case 0x15: /* DEC D */ {
+		cpu->registers.D = GB_Cpu_dec_8reg_and_set_flags(cpu, cpu->registers.D);
+	} break;
+	case 0x16: /* LD D, n8 */ {
+		cpu->registers.D =
+			GB_Bus_mem_read(cpu->bus, cpu->registers.PC++, CALLER_CPU);
+	} break;
+	// case 0x17: /* RLA */ {
+	// } break;
+	case 0x18: /* JR e8 */ {
+		uint8_t e = GB_Bus_mem_read(cpu->bus, cpu->registers.PC++, CALLER_CPU);
+		cpu->registers.PC += e;
+	} break;
+	case 0x19: /* ADD HL, DE */ {
+		uint8_t l = GB_Cpu_add_and_set_flags(cpu, cpu->registers.L,
+											 cpu->registers.E, false);
+		uint8_t h = GB_Cpu_add_and_set_flags(cpu, cpu->registers.H,
+											 cpu->registers.D, false);
+
+		cpu->registers.L = l;
+		cpu->registers.H = h;
+
+		GB_Cpu_set_flag(cpu, FLAG_SUB, 0);
+	} break;
+	case 0x1A: /* LD A, [DE] */ {
+		cpu->registers.A =
+			GB_Bus_mem_read(cpu->bus, cpu->registers.DE, CALLER_CPU);
+	} break;
+	case 0x1B: /* DEC DE */ {
+		cpu->registers.DE--;
+	} break;
+	case 0x1C: /* INC E */ {
+		cpu->registers.E = GB_Cpu_inc_8reg_and_set_flags(cpu, cpu->registers.E);
+	} break;
+	case 0x1D: /* DEC E */ {
+		cpu->registers.E = GB_Cpu_dec_8reg_and_set_flags(cpu, cpu->registers.E);
+	} break;
+	case 0x1E: /* LD E, n8 */ {
+		cpu->registers.E =
+			GB_Bus_mem_read(cpu->bus, cpu->registers.PC++, CALLER_CPU);
+	} break;
+	// case 0x1F: /* RRA */ {
+	// } break;
 	default:
 		fprintf(stderr, "[WARN] Missing instruction for the Opcode %x.\n",
 				opcode);
