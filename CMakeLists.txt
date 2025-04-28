@@ -15,10 +15,10 @@ add_executable(tests
 target_include_directories(tests PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
 add_library(Unity
-	unity/unity.c
+	external/Unity/src/unity.c
 )
 target_include_directories(Unity PUBLIC
-	unity
+	external/Unity/src
 )
 
 target_link_libraries(tests PRIVATE gbe_lib Unity)
