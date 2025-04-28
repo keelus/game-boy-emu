@@ -32,11 +32,7 @@ void test_0x01_ld_bc(void) {
 	GB_Bus_tick(&bus);
 
 	TEST_ASSERT_EQUAL(3, bus.cpu->registers.PC);
-	// TEST_ASSERT_EQUAL(0x1234, bus.cpu->registers.BC);
-
-	// Same
-	TEST_ASSERT_EQUAL(0x12, bus.cpu->registers.B);
-	TEST_ASSERT_EQUAL(0x34, bus.cpu->registers.C);
+	TEST_ASSERT_EQUAL(0x1234, bus.cpu->registers.BC);
 }
 
 /* 0x02: LD [BC], A */
@@ -110,7 +106,7 @@ void test_0x04_inc_b_zero(void) {
 
 	TEST_ASSERT_EQUAL(0xF0 & FLAG_ZERO, (bus.cpu->registers.F & FLAG_ZERO));
 	TEST_ASSERT_EQUAL(0, (bus.cpu->registers.F & FLAG_SUB));
-	TEST_ASSERT_EQUAL(0xF & FLAG_HALF_CARRY,
+	TEST_ASSERT_EQUAL(0xF0 & FLAG_HALF_CARRY,
 					  (bus.cpu->registers.F & FLAG_HALF_CARRY));
 	TEST_ASSERT_EQUAL(0xF0 & FLAG_CARRY, (bus.cpu->registers.F &
 										  FLAG_CARRY)); /* Remains unchanged */
@@ -174,7 +170,7 @@ void test_0x05_dec_b_zero(void) {
 
 void test_0x05_dec_b_half(void) {
 	bus.cpu->registers.PC = 0;
-	bus.cpu->registers.B = 0x0F;
+	bus.cpu->registers.B = 0x10;
 	bus.cpu->registers.F = 0b00010000;
 
 	bus.mem->data[0] = 0x05;
@@ -218,8 +214,9 @@ void test_0x08_ld(void) {
 	bus.mem->data[2] = 0x56;
 	GB_Bus_tick(&bus);
 
-	TEST_ASSERT_EQUAL(2, bus.cpu->registers.PC);
-	TEST_ASSERT_EQUAL(0x3412, bus.mem->data[0x5678]);
+	TEST_ASSERT_EQUAL(3, bus.cpu->registers.PC);
+	TEST_ASSERT_EQUAL(0x34, bus.mem->data[0x5678]);
+	TEST_ASSERT_EQUAL(0x12, bus.mem->data[0x5678 + 1]);
 }
 
 /* 0x09: ADD HL, BC */
