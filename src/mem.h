@@ -2,6 +2,7 @@
 #define GB_MEM_H
 
 #include "bus.h"
+#include <stddef.h>
 #include <stdint.h>
 
 #define GB_MEM_SIZE 65536
@@ -18,6 +19,7 @@ struct GB_Mem {
 typedef struct GB_Mem GB_Mem;
 
 void GB_Mem_init(GB_Mem *mem, GB_Bus *bus);
+int GB_Mem_load_rom(GB_Mem *mem, char *rom_path);
 
 uint8_t GB_Mem_read(GB_Mem *mem, uint16_t address);
 void GB_Mem_write(GB_Mem *mem, uint16_t address, uint8_t value);
