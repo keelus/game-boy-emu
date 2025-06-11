@@ -73,15 +73,20 @@ struct GB_Cpu {
 		uint16_t SP;
 		uint16_t PC;
 	} registers;
+	bool IME;
 };
 typedef struct GB_Cpu GB_Cpu;
 
 void GB_Cpu_init(GB_Cpu *cpu, GB_Bus *bus);
 uint8_t GB_Cpu_tick(GB_Cpu *cpu);
+bool GB_Cpu_get_flag(GB_Cpu *cpu, uint8_t mask);
 void GB_Cpu_set_flag(GB_Cpu *cpu, uint8_t mask, bool value);
-uint8_t GB_Cpu_add_and_set_flags(GB_Cpu *cpu, uint8_t a, uint8_t b,
-								 bool update_zero_flag);
+
+uint8_t GB_Cpu_add_and_set_flags(GB_Cpu *cpu, uint8_t a, uint8_t b);
+uint8_t GB_Cpu_sub_and_set_flags(GB_Cpu *cpu, uint8_t a, uint8_t b);
+
 uint8_t GB_Cpu_inc_8reg_and_set_flags(GB_Cpu *cpu, uint8_t value);
 uint8_t GB_Cpu_dec_8reg_and_set_flags(GB_Cpu *cpu, uint8_t value);
+uint8_t GB_Cpu_xor_and_set_flags(GB_Cpu *cpu, uint8_t a, uint8_t b);
 
 #endif
